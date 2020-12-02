@@ -8,6 +8,17 @@ $ composer require tyryshkinm/exchange-rates
 
 ```php
 use Tyryshkinm\ExchangeRates\ExchangeRates;
+use Tyryshkinm\ExchangeRates\Factory\ProviderFactory;
+use Tyryshkinm\ExchangeRates\Http\Client;
 
-$date = new \DateTime('2011-01-01');
-$exchangeRates = ExchangeRates::getAverageRates($date);
+$currency = 'USD'; // USD and EUR are available only.
+$date = new \DateTime();
+$client = new Client();
+$providerFactory = new ProviderFactory($client);
+$exchangeRateModel = new ExchangeRates(...$providerFactory->getProviders());
+
+// for adding your own provider
+$myOwnProvider = new MyOwnProvider(); // need implement ProviderInterface
+$exchangeRateModel->addProvider($myOwnProvider);
+
+$rate = $exchangeRateModel->getAverageRate($currency, $date);
