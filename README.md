@@ -21,4 +21,4 @@ $exchangeRateModel = new ExchangeRates(...$providerFactory->getProviders());
 $myOwnProvider = new MyOwnProvider(); // need implement ProviderInterface
 $exchangeRateModel->addProvider($myOwnProvider);
 
-$rate = $exchangeRateModel->getAverageRate($currency, $date);
+$averageRate = $exchangeRateModel->getAverageRate($currency, $date);
