@@ -1,41 +1,57 @@
 <?php
 
+
 namespace Tyryshkinm\ExchangeRates;
 
 
-use Tyryshkinm\ExchangeRates\Providers\CBR;
-use Tyryshkinm\ExchangeRates\Providers\RBC;
+use Tyryshkinm\ExchangeRates\DTO\AverageRateDTO;
+use Tyryshkinm\ExchangeRates\Exception\EmptyProviderListException;
+use Tyryshkinm\ExchangeRates\Provider\ProviderInterface;
 
 class ExchangeRates
 {
     /**
-     * Get average rates from providers.
-     *
-     * @param null $date
-     * @return array
+     * @var ProviderInterface[]
      */
-    public function getAverageRates ($date)
+    private array $providers;
+
+    public function __construct(ProviderInterface ...$providers)
     {
-        if (!$date instanceof \DateTime) {
-            $date = null;
+        $this->providers = $providers;
+    }
+
+    /**
+     * Public method for implementation your own provider.
+     *
+     * @param ProviderInterface $provider
+     * @return void
+     */
+    public function addProvider(ProviderInterface $provider): void
+    {
+        $this->providers[] = $provider;
+    }
+
+    /**
+     * Get average rates from providers by currency and date.
+     *
+     * @param string $currency
+     * @param \DateTime $date
+     * @return float|int
+     * @throws EmptyProviderListException
+     */
+    public function getAverageRate(string $currency, \DateTime $date): AverageRateDTO
+    {
+        if (!$this->providers) {
+            throw new EmptyProviderListException();
         }
 
-        $cbr = new CBR();
-        $usdCbr = $cbr->getRate('USD', $date);
-        $eurCbr = $cbr->getRate('EUR', $date);
+        $sumRate = 0;
+        foreach ($this->providers as $provider) {
+            $sumRate += $provider->getRate($currency, $date);
+        }
 
-        $rbc = new RBC();
-        $usdRbc = $rbc->getRate('USD', $date);
-        $eurRbc = $rbc->getRate('EUR', $date);
+        $averageRate = $sumRate/count($this->providers);
 
-        $usdRates = [$usdCbr, $usdRbc];
-        $averageUsdRates = array_sum($usdRates)/count($usdRates);
-
-        $eurRates = [$eurCbr, $eurRbc];
-        $averageEurRates = array_sum($eurRates)/count($eurRates);
-
-        $averageRates = ['USD' => $averageUsdRates, 'EUR' => $averageEurRates];
-
-        return $averageRates;
+        return new AverageRateDTO($date, $currency, $averageRate);
     }
 }
